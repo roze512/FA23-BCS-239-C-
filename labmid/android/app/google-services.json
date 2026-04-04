@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "project_number": "732422342282",
+    "project_id": "smartpos-e290e",
+    "storage_bucket": "smartpos-e290e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732422342282:android:63aeb66427454e4de20f73",
+        "android_client_info": {
+          "package_name": "com.example.smartpos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "732422342282-oe0krmo51o6r7m8pia0u7054e0h7p00d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartpos",
+            "certificate_hash": "dcf5b73d53458225dd64e89a36e1bfa88d24b6cc"
+          }
+        },
+        {
+          "client_id": "732422342282-qlh8rih9doudbe34aciga15j16k7g65p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smartpos",
+            "certificate_hash": "aa49cf04d2722688f66ea043003e843b28457e95"
+          }
+        },
+        {
+          "client_id": "732422342282-0nohdj18sjlkav6n520iqcad5cbl8fh4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA_el7l117nTkb8VQNCbPIZprfz6CmuSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "732422342282-0nohdj18sjlkav6n520iqcad5cbl8fh4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:732422342282:android:769cac03292b5962e20f73",
+        "android_client_info": {
+          "package_name": "com.gulfamali.smartpos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "732422342282-l5vriuom3g26l3b5da7odajin1jmu7dh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gulfamali.smartpos",
+            "certificate_hash": "aa49cf04d2722688f66ea043003e843b28457e95"
+          }
+        },
+        {
+          "client_id": "732422342282-n2kejelvoh5kkqjegbicrj8lrs79kqhn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gulfamali.smartpos",
+            "certificate_hash": "dcf5b73d53458225dd64e89a36e1bfa88d24b6cc"
+          }
+        },
+        {
+          "client_id": "732422342282-0nohdj18sjlkav6n520iqcad5cbl8fh4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA_el7l117nTkb8VQNCbPIZprfz6CmuSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "732422342282-0nohdj18sjlkav6n520iqcad5cbl8fh4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

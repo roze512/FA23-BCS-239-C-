@@ -1,0 +1,340 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import '../../config/theme.dart';
+import '../../providers/cart_provider.dart';
+import '../../providers/sales_provider.dart';
+import '../../providers/auth_provider.dart';
+
+/// Receipt screen with success animation
+class ReceiptScreen extends StatefulWidget {
+  final String saleId;
+  final String customerName;
+  final String? customerEmail;
+
+  const ReceiptScreen({
+    super.key,
+    required this.saleId,
+    required this.customerName,
+    this.customerEmail,
+  });
+
+  @override
+  State<ReceiptScreen> createState() => _ReceiptScreenState();
+}
+
+class _ReceiptScreenState extends State<ReceiptScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+    _animationController.forward();
+    _loadSale();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSale() async {
+    final salesProvider = Provider.of<SalesProvider>(context, listen: false);
+    await salesProvider.getSaleById(widget.saleId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: AppTheme.surfaceDark,
+        automaticallyImplyLeading: false,
+        title: const Text('Receipt', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () {
+              // Clear cart and go back to POS
+              Provider.of<CartProvider>(context, listen: false).clearCart();
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+          ),
+        ],
+      ),
+      body: Consumer2<SalesProvider, AuthProvider>(
+        builder: (context, salesProvider, authProvider, child) {
+          final sale = salesProvider.currentSale;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Success Animation
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      color: AppTheme.primaryGreen,
+                      size: 60,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Payment Successful!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Receipt Content
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.borderDark.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Business Name
+                      Center(
+                        child: Text(
+                          authProvider.user?.name ?? 'Smart POS',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Paid Badge
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'PAID',
+                            style: TextStyle(
+                              color: AppTheme.primaryGreen,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Divider(color: AppTheme.borderDark, height: 32),
+
+                      // Invoice Details
+                      _buildDetailRow('Invoice No.', sale?.invoiceNumber ?? widget.saleId.substring(0, 8).toUpperCase()),
+                      _buildDetailRow('Date', _formatDate(DateTime.now())),
+                      _buildDetailRow('Customer', widget.customerName),
+                      _buildDetailRow('Cashier', authProvider.user?.name ?? 'User'),
+                      const Divider(color: AppTheme.borderDark, height: 32),
+
+                      // Items
+                      const Text(
+                        'Items',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (sale != null)
+                        ...sale.items.map((item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${item.quantity}x ${item.productName}',
+                                      style: const TextStyle(color: AppTheme.textSecondary),
+                                    ),
+                                  ),
+                                  Text(
+                                    '\$${item.lineTotal.toStringAsFixed(2)}',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              ),
+                            )),
+                      const Divider(color: AppTheme.borderDark, height: 32),
+
+                      // Totals
+                      if (sale != null) ...[
+                        _buildDetailRow('Subtotal', '\$${sale.subtotal.toStringAsFixed(2)}'),
+                        if (sale.discount > 0)
+                          _buildDetailRow('Discount', '-\$${sale.discount.toStringAsFixed(2)}', isHighlight: true),
+                        _buildDetailRow('Tax (${sale.taxRate.toStringAsFixed(0)}%)', '\$${sale.tax.toStringAsFixed(2)}'),
+                        const Divider(color: AppTheme.borderDark, height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '\$${sale.total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: AppTheme.primaryGreen,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Fluttertoast.showToast(msg: 'Print feature coming soon');
+                        },
+                        icon: const Icon(Icons.print),
+                        label: const Text('Print'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryGreen,
+                          side: const BorderSide(color: AppTheme.primaryGreen),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: widget.customerEmail != null
+                            ? () {
+                                // TODO: Implement email functionality
+                                Fluttertoast.showToast(msg: 'Email functionality coming soon');
+                              }
+                            : null,
+                        icon: const Icon(Icons.email),
+                        label: const Text('Email'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryGreen,
+                          side: const BorderSide(color: AppTheme.primaryGreen),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // TODO: Implement share functionality
+                          Fluttertoast.showToast(msg: 'Share functionality coming soon');
+                        },
+                        icon: const Icon(Icons.share),
+                        label: const Text('Share'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryGreen,
+                          side: const BorderSide(color: AppTheme.primaryGreen),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // New Sale Button
+                ElevatedButton(
+                  onPressed: () {
+                    Provider.of<CartProvider>(context, listen: false).clearCart();
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryGreen,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'New Sale',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, {bool isHighlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: isHighlight ? AppTheme.alertRed : AppTheme.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: isHighlight ? AppTheme.alertRed : Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+}
